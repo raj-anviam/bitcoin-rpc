@@ -13,9 +13,9 @@ class BaseController extends Controller
 
     function __construct() {
         try {
-            $this->bitcoind = new BitcoinClient('http://someuser:somepassword@localhost:8332/');
+            $this->bitcoind = new BitcoinClient('http://someuser:somepassword@localhost:18332/');
         }
-        catch(GuzzleHttp\Exception\ConnectException $e) {
+        catch(\GuzzleHttp\Exception\ConnectException $e) {
             dd($e->getMessage());
         }
     }

@@ -29,4 +29,7 @@ Route::group(['prefix' => 'wallets', 'middleware' => 'auth', 'controller' => Wal
     Route::get('/', 'index')->name('wallets.index');
     Route::get('/create', 'create')->name('wallets.create');
     Route::post('/store', 'store')->name('wallets.store');
+    Route::get('/show/{id}', 'show')->name('wallets.show');
+    Route::get('/transactions/{wallet_id}', 'listTransactions')->name('transactions.index');
+    Route::get('/get-new-address/{wallet_id}', 'getNewAddress')->name('wallets.get-new-address');
 });

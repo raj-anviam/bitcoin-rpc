@@ -14,9 +14,10 @@ class WalletController extends BaseController
         try {
 
             $bitcoinWallets = $this->bitcoind->listWallets()->get();
+            // dd($bitcoinWallets = $this->bitcoind->wallet('test_wallet')->listUnspent()->get());
 
-            $bitcoinWallets  = (is_array($bitcoinWallets))? $bitcoinWallets: array($bitcoinWallets);
-            $updateWallets = Wallet::whereNotIn('name', $bitcoinWallets)->update(['exists' => false]);
+            // $bitcoinWallets  = (is_array($bitcoinWallets))? $bitcoinWallets: array($bitcoinWallets);
+            // $updateWallets = Wallet::whereNotIn('name', $bitcoinWallets)->update(['exists' => false]);
             
             $wallets = Wallet::where('exists', 1)->get();
             return view('wallets.index', compact('wallets'));
@@ -65,12 +66,24 @@ class WalletController extends BaseController
     }
     
     public function listTransactions($walletId) {
-        $data = new \StdClass;
-        
         $wallet = Wallet::findOrFail($walletId);
         
-        $data = $this->bitcoind->wallet($wallet->name)->listTransactions()->get();
-        $addresses = $this->bitcoind->wallet('test_wallet')->getAddressesByLabel('')->get();
+        try {
+            $data = $this->bitcoind->wallet($wallet->name)->listTransactions()->get();
+            if(!isset($data[0]))
+                $data = array(0 => $data);
+
+            try {
+                $addresses = $this->bitcoind->wallet($wallet->name)->getAddressesByLabel('')->get();
+            }
+            catch(BadRemoteCallException $e) {
+                $addresses = [];
+            }
+        }
+        catch(BadRemoteCallException $e) {
+            Session::flash('error', $e->getMessage());
+            return redirect()->back();
+        }
         
         // $data = $this->bitcoind->wallet('test_wallet')->listReceivedByAddress()->get();
         return view('transactions.index', compact('data', 'walletId', 'addresses'));

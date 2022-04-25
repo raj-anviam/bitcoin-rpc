@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Denpa\Bitcoin\Client as BitcoinClient;
+use App\Models\Wallet;
 
 class BaseController extends Controller
 {
@@ -14,6 +15,15 @@ class BaseController extends Controller
     function __construct() {
         try {
             $this->bitcoind = new BitcoinClient('http://someuser:somepassword@localhost:18332/');
+
+            // load available wallets
+            $wallets = Wallet::all();
+            $loadedWallets = $this->bitcoind->listWallets()->get();
+
+            foreach($wallets as $wallet) {
+                if(!in_array($wallet->name, $loadedWallets))
+                    $this->bitcoind->loadWallet($wallet->name);
+            }
         }
         catch(\GuzzleHttp\Exception\ConnectException $e) {
             dd($e->getMessage());

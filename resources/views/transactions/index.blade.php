@@ -31,14 +31,14 @@
                             @foreach($data as $key => $value)
                             <tr>
                                 <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $loop->iteration }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['address'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['category'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['amount'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['label'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['confirmations'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['blockhash'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['txid'] }}</td>
-                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ \Carbon\Carbon::parse($value['timereceived'])->format('H:i d-m-Y') }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['address'] ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['category'] ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['amount'] ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['label'] ?? '' ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['confirmations'] ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['blockhash'] ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ $value['txid'] ?? '' }}</td>
+                                <td class="text-sm text-gray-900 font-light px-6 whitespace-nowrap">{{ \Carbon\Carbon::parse($value['timereceived'] ?? '')->format('H:i d-m-Y') }}</td>
                             </tr>
                         @endforeach
                         </tbody>

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WalletController;
+use App\Http\Controllers\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,4 +33,8 @@ Route::group(['prefix' => 'wallets', 'middleware' => 'auth', 'controller' => Wal
     Route::get('/show/{id}', 'show')->name('wallets.show');
     Route::get('/transactions/{wallet_id}', 'listTransactions')->name('transactions.index');
     Route::get('/get-new-address/{wallet_id}', 'getNewAddress')->name('wallets.get-new-address');
+});
+
+Route::group(['prefix' => 'transactions', 'middleware' => 'auth', 'controller' => TransactionController::class], function() {
+    Route::post('/batch/add', 'addBatch')->name('transactions.add-batch');
 });

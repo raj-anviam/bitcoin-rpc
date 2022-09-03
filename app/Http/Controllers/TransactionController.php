@@ -7,6 +7,7 @@ use App\Http\Controllers\API\BaseController as BaseController;
 use Denpa\Bitcoin\Exceptions\BadRemoteCallException;
 use App\Models\Wallet;
 use App\Models\Batch;
+use App\Models\Transaction;
 use DB, Auth, Session;
 
 class TransactionController extends BaseController
@@ -59,36 +60,73 @@ class TransactionController extends BaseController
         );
 
         $defaultWallet = $this->bitcoind->wallet('test_wallet')->listReceivedByAddress()->get();
-        $privateKey = $this->bitcoind->dumpPrivKey($defaultWallet['address'])->get();
+        $privateKey = $this->bitcoind->dumpPrivKey($defaultWallet['address'] ?? $defaultWallet[0]['address'])->get();
 
         
         $wallets = $this->bitcoind->listWallets()->get();
         $totalWallets = is_array($wallets)? count($wallets): 1;
 
+        unset($wallets[0]);
+        unset($wallets[3]);
+
         // check account has enough wallets
         if($totalWallets >= $batch->number_of_wallets) {
 
             $addresses = [];
+            $commission = 0;
             foreach($wallets as $key => $wallet) {
                 $currentWalletAddress = $this->bitcoind->wallet($wallet)->listReceivedByAddress()->get();
 
                 if(!count($currentWalletAddress))
                     $address = $this->bitcoind->wallet($wallet)->getNewAddress()->get();
                 else
-                    $address = $currentWalletAddress['address'];
+                    $address = $currentWalletAddress['address'] ?? $currentWalletAddress[0]['address'];
                     
-                    // make transaction
-                    $rawTransactionOutput = array(array($address => 0.00161766));
-                    // dd($rawTransactionOutput);
+                    $amount = ($balance[0]['amount'] / count($wallets));
+
+                    $commission =+ (5 / 100) * $amount;
+                    $totalCommission =+ (5 / 100) * $amount;
                     
-                    $unsigedHash = $this->bitcoind->createRawTransaction($rawTransactionPayload, $rawTransactionOutput)->get();
-                    $rawTransactionPayload[0]['scriptPubKey'] = $balance[0]['scriptPubKey'];
-                    $hash = $this->bitcoind->signRawTransactionWithWallet($unsigedHash)->get();
-                    $txid = $this->bitcoind->sendRawTransaction($hash['hex'])->get();
-                    // dd($txid);
-            }
+                    $addresses[] = array($address => number_format($amount - $commission, 8));
+
+                    $transactions[] = array($address => $wallet, 'type' => 1);
+                }
+                
+                $address = $this->bitcoind->wallet('commissions')->getNewAddress()->get();
+                
+                $transactions[] = array($address => 'commissions', 'type' => 2);
+
+                $addresses[] = array($address => number_format($totalCommission, 8 ));
+                
+                // make transaction
+                $rawTransactionOutput = $addresses;
+
+                $unsigedHash = $this->bitcoind->createRawTransaction($rawTransactionPayload, $rawTransactionOutput)->get();
+                $rawTransactionPayload[0]['scriptPubKey'] = $balance[0]['scriptPubKey'];
+                $hash = $this->bitcoind->signRawTransactionWithKey($unsigedHash, array($privateKey))->get();
+                $txid = $this->bitcoind->sendRawTransaction($hash['hex'])->get();
         }
 
-        dd('here');
+        $this->store($txid, $transactions, $batch->id);
+    }
+
+    public function store($txid, $transactions, $batchId) {
+        $transaction = $this->bitcoind->wallet('test_wallet')->getTransaction($txid)->get()['details'];
+
+        foreach($transaction as $key => $value) {
+
+            $walletId = Wallet::whereName($transactions[$key][$value['address']])->value('id');
+
+            Transaction::create([
+                'wallet_id' => $walletId,
+                'batch_id' => $batchId,
+                'type' => $transactions[$key]['type'],
+                'amount' => $value['amount'],
+                'address' => $value['address'],
+                'txid' => $txid,
+                'btc_details' => json_encode($value),
+            ]);
+        }
+
     }
 }
